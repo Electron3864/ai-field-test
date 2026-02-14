@@ -1,5 +1,5 @@
 document.body.style.background = "blue";
-alert("VERSION3");
+alert("VERSION4");
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -74,20 +74,29 @@ function applyPhysics(p) {
 // ===== AI移動 =====
 function chase(p, target) {
 
-  let diff = target.x - p.x;
+  let dx = target.x - p.x;
+  let dy = target.y - p.y;
 
-  let desired_v = diff * 0.05;
-
+  // 横移動
+  let desired_v = dx * 0.05;
   if (desired_v > 3) desired_v = 3;
   if (desired_v < -3) desired_v = -3;
 
   p.vx += (desired_v - p.vx) * 0.2;
 
-  if (Math.abs(diff) < 50 && p.onGround) {
+  // ▼ ここが重要 ▼
+
+  // 相手が上にいるならジャンプ試行
+  if (dy < -30 && p.onGround) {
     p.vy = -10;
   }
-}
 
+  // 相手が下にいるなら端から落ちる
+  if (dy > 50) {
+    // 横方向を強める（落ちやすくする）
+    p.vx += 0.5 * Math.sign(dx);
+  }
+}
 // ===== 描画 =====
 function draw() {
 
