@@ -1,75 +1,127 @@
 document.body.style.background = "red";
-alert("NEW VERSION");
+alert("VERSION2");
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let x = 200;
-let y = 500;
+const W = 400;
+const H = 600;
 
-let vx = 0;
-let inertia = 0.9;
+let gravity = 0.5;
 
-let k_target = 0.01;     // 目標への利得係数
-let k_wall = 2000;       // 壁ポテンシャル強度
-let lastTouchX = 200;
+// ===== AI1 =====
+let p1 = {
+  x: 100,
+  y: 100,
+  vx: 0,
+  vy: 0
+};
 
-function gainTarget(tx) {
-  return k_target * (tx - x);
+// ===== AI2 =====
+let p2 = {
+  x: 300,
+  y: 100,
+  vx: 0,
+  vy: 0
+};
+
+// ===== 足場 =====
+let platforms = [];
+
+function generatePlatforms() {
+  platforms = [];
+  for (let i = 0; i < 5; i++) {
+    platforms.push({
+      x: Math.random() * 300,
+      y: 150 + i * 90,
+      w: 100
+    });
+  }
 }
 
-function wallPotential(px) {
-  // 左壁
-  let left = k_wall / Math.max(1, px - 10);
-  // 右壁
-  let right = -k_wall / Math.max(1, 390 - px);
-  return left + right;
+generatePlatforms();
+
+// ===== 物理更新 =====
+function applyPhysics(p) {
+
+  p.vy += gravity;
+
+  p.x += p.vx;
+  p.y += p.vy;
+
+  // 壁制限
+  if (p.x < 10) p.x = 10;
+  if (p.x > W - 10) p.x = W - 10;
+
+  // 足場判定
+  for (let pf of platforms) {
+    if (
+      p.x > pf.x &&
+      p.x < pf.x + pf.w &&
+      p.y + 10 > pf.y &&
+      p.y + 10 < pf.y + 10 &&
+      p.vy > 0
+    ) {
+      p.y = pf.y - 10;
+      p.vy = 0;
+    }
+  }
+
+  // 床
+  if (p.y > H - 10) {
+    p.y = H - 10;
+    p.vy = 0;
+  }
+}
+
+// ===== AI移動ロジック =====
+function chase(p, target) {
+
+  let diff = target.x - p.x;
+
+  let desired_v = diff * 0.05;
+
+  if (desired_v > 3) desired_v = 3;
+  if (desired_v < -3) desired_v = -3;
+
+  p.vx += (desired_v - p.vx) * 0.2;
+
+  // ジャンプ判断
+  if (Math.abs(diff) < 50 && p.vy === 0) {
+    p.vy = -10;
+  }
+}
+
+// ===== 描画 =====
+function draw() {
+
+  ctx.clearRect(0, 0, W, H);
+
+  // 足場
+  ctx.fillStyle = "gray";
+  for (let pf of platforms) {
+    ctx.fillRect(pf.x, pf.y, pf.w, 10);
+  }
+
+  // AI1
+  ctx.fillStyle = "white";
+  ctx.fillRect(p1.x - 10, p1.y - 10, 20, 20);
+
+  // AI2
+  ctx.fillStyle = "red";
+  ctx.fillRect(p2.x - 10, p2.y - 10, 20, 20);
 }
 
 function update() {
 
-  let diff = lastTouchX - x;
+  chase(p1, p2);
+  chase(p2, p1);
 
-  let desired_v = diff * 0.05;   // ← 距離比例
+  applyPhysics(p1);
+  applyPhysics(p2);
 
-  // 上限速度制限
-  if (desired_v > 5) desired_v = 5;
-  if (desired_v < -5) desired_v = -5;
-
-  vx += (desired_v - vx) * 0.2;
-
-  x += vx;
-
-  if (x < 10) {
-    x = 10;
-    vx = 0;
-  }
-  if (x > 390) {
-    x = 390;
-    vx = 0;
-  }
-
-  draw(0,0,0);
+  draw();
 }
-function draw(Gt, Gw, Gtotal) {
-  ctx.clearRect(0, 0, 400, 600);
-
-  // キャラ
-  ctx.fillStyle = "white";
-  ctx.fillRect(x - 10, y - 10, 20, 20);
-
-  // デバッグ表示
-  ctx.fillStyle = "lime";
-  ctx.font = "14px monospace";
-  ctx.fillText("G_target: " + Gt.toFixed(2), 10, 20);
-  ctx.fillText("G_wall:   " + Gw.toFixed(2), 10, 40);
-  ctx.fillText("G_total:  " + Gtotal.toFixed(2), 10, 60);
-  ctx.fillText("vx:       " + vx.toFixed(2), 10, 80);
-}
-
-canvas.addEventListener("touchmove", e => {
-  let rect = canvas.getBoundingClientRect();
-  lastTouchX = e.touches[0].clientX - rect.left;
-});
 
 function loop() {
   update();
@@ -77,19 +129,3 @@ function loop() {
 }
 
 loop();
-
-canvas.addEventListener("touchstart", e => {
-  let rect = canvas.getBoundingClientRect();
-  let tx = e.touches[0].clientX - rect.left;
-  let ty = e.touches[0].clientY - rect.top;
-
-  // 画面上部をタップしたらパラメータ変更
-  if (ty < 100) {
-    k_target += 0.005;
-  }
-
-  // 画面下部をタップしたら慣性変更
-  if (ty > 500) {
-    inertia -= 0.05;
-  }
-});
