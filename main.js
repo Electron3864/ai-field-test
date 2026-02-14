@@ -74,13 +74,18 @@ function loop() {
 
 loop();
 
-let k_target = 0.01;
-let k_wall = 2000;
-let inertia = 0.9;
+canvas.addEventListener("touchstart", e => {
+  let rect = canvas.getBoundingClientRect();
+  let tx = e.touches[0].clientX - rect.left;
+  let ty = e.touches[0].clientY - rect.top;
 
-window.addEventListener("keydown", e => {
-  if (e.key === "1") k_target += 0.005;
-  if (e.key === "2") k_target -= 0.005;
-  if (e.key === "3") inertia += 0.02;
-  if (e.key === "4") inertia -= 0.02;
+  // 画面上部をタップしたらパラメータ変更
+  if (ty < 100) {
+    k_target += 0.005;
+  }
+
+  // 画面下部をタップしたら慣性変更
+  if (ty > 500) {
+    inertia -= 0.05;
+  }
 });
