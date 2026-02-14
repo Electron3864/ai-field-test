@@ -24,7 +24,6 @@ function wallPotential(px) {
 }
 
 function update() {
-function update() {
 
   let diff = lastTouchX - x;
 
