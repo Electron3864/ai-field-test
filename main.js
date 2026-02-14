@@ -27,15 +27,16 @@ function update() {
 
   let diff = lastTouchX - x;
 
-  // 一定速度を目標にする
-  let desired_v = 3 * Math.sign(diff);
+  let desired_v = diff * 0.05;   // ← 距離比例
 
-  // 速度を滑らかに近づける
+  // 上限速度制限
+  if (desired_v > 5) desired_v = 5;
+  if (desired_v < -5) desired_v = -5;
+
   vx += (desired_v - vx) * 0.2;
 
   x += vx;
 
-  // 壁制限
   if (x < 10) {
     x = 10;
     vx = 0;
@@ -47,7 +48,6 @@ function update() {
 
   draw(0,0,0);
 }
-
 function draw(Gt, Gw, Gtotal) {
   ctx.clearRect(0, 0, 400, 600);
 
