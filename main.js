@@ -1,4 +1,4 @@
-document.body.style.background = "red";
+document.body.style.background = "blue";
 alert("VERSION2");
 
 const canvas = document.getElementById("game");
@@ -8,6 +8,8 @@ const W = 400;
 const H = 600;
 
 let gravity = 0.5;
+let p1 = { x:100, y:100, vx:0, vy:0, prevY:100 };
+let p2 = { x:300, y:100, vx:0, vy:0, prevY:100 };
 
 // ===== AI1 =====
 let p1 = {
@@ -44,6 +46,8 @@ generatePlatforms();
 // ===== 物理更新 =====
 function applyPhysics(p) {
 
+  p.prevY = p.y;
+
   p.vy += gravity;
 
   p.x += p.vx;
@@ -53,17 +57,24 @@ function applyPhysics(p) {
   if (p.x < 10) p.x = 10;
   if (p.x > W - 10) p.x = W - 10;
 
-  // 足場判定
+  let onGround = false;
+
+  // 足場判定（上から着地のみ）
   for (let pf of platforms) {
+
+    let wasAbove = p.prevY + 10 <= pf.y;
+    let isBelow  = p.y + 10 >= pf.y;
+
     if (
       p.x > pf.x &&
       p.x < pf.x + pf.w &&
-      p.y + 10 > pf.y &&
-      p.y + 10 < pf.y + 10 &&
+      wasAbove &&
+      isBelow &&
       p.vy > 0
     ) {
       p.y = pf.y - 10;
       p.vy = 0;
+      onGround = true;
     }
   }
 
@@ -71,7 +82,10 @@ function applyPhysics(p) {
   if (p.y > H - 10) {
     p.y = H - 10;
     p.vy = 0;
+    onGround = true;
   }
+
+  p.onGround = onGround;
 }
 
 // ===== AI移動ロジック =====
@@ -87,10 +101,9 @@ function chase(p, target) {
   p.vx += (desired_v - p.vx) * 0.2;
 
   // ジャンプ判断
-  if (Math.abs(diff) < 50 && p.vy === 0) {
-    p.vy = -10;
+  if (Math.abs(diff) < 50 && p.onGround) {
+  p.vy = -10;
   }
-}
 
 // ===== 描画 =====
 function draw() {
