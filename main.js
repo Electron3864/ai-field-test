@@ -73,3 +73,14 @@ function loop() {
 }
 
 loop();
+
+let k_target = 0.01;
+let k_wall = 2000;
+let inertia = 0.9;
+
+window.addEventListener("keydown", e => {
+  if (e.key === "1") k_target += 0.005;
+  if (e.key === "2") k_target -= 0.005;
+  if (e.key === "3") inertia += 0.02;
+  if (e.key === "4") inertia -= 0.02;
+});
