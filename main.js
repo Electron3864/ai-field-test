@@ -24,16 +24,19 @@ function wallPotential(px) {
 }
 
 function update() {
+function update() {
 
-  let G_target = gainTarget(lastTouchX);
-  let G_wall = wallPotential(x);
+  let diff = lastTouchX - x;
 
-  let G_total = G_target + G_wall;
+  // 一定速度を目標にする
+  let desired_v = 3 * Math.sign(diff);
 
-  vx += G_total;
-  vx *= inertia;
+  // 速度を滑らかに近づける
+  vx += (desired_v - vx) * 0.2;
+
   x += vx;
 
+  // 壁制限
   if (x < 10) {
     x = 10;
     vx = 0;
@@ -43,7 +46,7 @@ function update() {
     vx = 0;
   }
 
-  draw(G_target, G_wall, G_total);
+  draw(0,0,0);
 }
 
 function draw(Gt, Gw, Gtotal) {
