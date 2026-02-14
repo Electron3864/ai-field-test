@@ -1,5 +1,5 @@
 document.body.style.background = "blue";
-alert("VERSION4");
+alert("VERSION5");
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -8,6 +8,10 @@ const W = 400;
 const H = 600;
 
 let gravity = 0.5;
+
+if (dy < -30 && p.onGround && hasPlatformAbove(p)) {
+  p.vy = -10;
+}
 
 // ===== AI =====
 let p1 = { x:100, y:100, vx:0, vy:0, prevY:100, onGround:false };
@@ -72,18 +76,19 @@ function applyPhysics(p) {
 }
 
 // ===== AI移動 =====
-function chase(p, target) {
-
-  let dx = target.x - p.x;
-  let dy = target.y - p.y;
-
-  // 横移動
-  let desired_v = dx * 0.05;
-  if (desired_v > 3) desired_v = 3;
-  if (desired_v < -3) desired_v = -3;
-
-  p.vx += (desired_v - p.vx) * 0.2;
-
+function hasPlatformAbove(p) {
+  for (let pf of platforms) {
+    if (
+      pf.y < p.y &&
+      pf.y > p.y - 120 &&   // ジャンプ届く範囲
+      p.x > pf.x - 20 &&
+      p.x < pf.x + pf.w + 20
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
   // ▼ ここが重要 ▼
 
   // 相手が上にいるならジャンプ試行
